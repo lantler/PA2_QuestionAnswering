@@ -240,7 +240,7 @@ def gen_where_response(user_input, wikipedia_summary):
     if user_words[1] == 'is':
         tense = 'is'
     if sent_part_2 != '' and response_sent != None:
-        return object_name + " " + tense + " located in " + sent_part_2
+        return object_name + " " + tense + " located " + sent_part_2
 
     if response_sent != None and sent_part_2 == '':
         return response_sent
