@@ -1,6 +1,4 @@
 import pandas as pd
-#import en_core_web_sm
-
 import re
 import sys
 import nltk
@@ -11,15 +9,8 @@ import logging
 import spacy
 nlp = spacy.load("en_core_web_sm")
 from spacy.matcher import Matcher
-
 nltk.download('punkt', quiet=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s: %(message)s',
-    filename='logfile.txt',
-    filemode='a'
-)
 
 def get_user_input():
     userInput = input("> ")
@@ -138,6 +129,20 @@ def find_sentence_with_date(text):
         matches = matcher(sentence_doc)
         if matches:
             return sentence.text # Match sentence if it has a date
+        
+    return None 
+
+def find_sentence_with_location(text):
+    doc = nlp(text)
+    
+    matcher = Matcher(nlp.vocab)
+    matcher.add("DATE", [[{"ENT_TYPE": "GPE"}]])
+    
+    for sentence in doc.sents:
+        sentence_doc = nlp(sentence.text)
+        matches = matcher(sentence_doc)
+        if matches:
+            return sentence.text # Match sentence if it has GPE
     
     return None 
 
@@ -149,6 +154,27 @@ def find_sentence_with_regex(text, regex_pattern):
             return sentence.text
     
     return None 
+
+def words_after_given_word(text, target_word):
+    if text == None:
+        return ''
+    words = text.split()
+    if target_word in words:
+        target_index = words.index(target_word)
+        return ' '.join(words[target_index + 1:])
+    else:
+        return ''
+
+def find_last_gpe_in_sentence(sentence):
+    doc = nlp(sentence)
+    
+    last_gpe = None
+
+    for ent in doc.ents:
+        if ent.label_ == "GPE":
+            last_gpe = ent.text
+    
+    return last_gpe
 
 def gen_who_response(user_input, wikipedia_summary):
     # Return the first sentence of the wikipedia summary
@@ -198,18 +224,31 @@ def gen_when_response(user_input, wikipedia_summary):
     else:
         # Return the first sentence with a date in it
         sent_with_date = find_sentence_with_date(wikipedia_summary)
+
         if sent_with_date != None:
             return sent_with_date
         else:
             return "I'm sorry, I don't know the answer."
 
 def gen_where_response(user_input, wikipedia_summary):
-    location_patterns = r"\b((is|was|did|located)* (near|around|at|spanning)+)\b"
-    response = find_sentence_with_regex(wikipedia_summary, location_patterns)
-    if response != None:
-        return response
-    else:
-        return "I'm sorry, I don't know the answer."
+    location_patterns = r"\b(located)\b"
+    response_sent = find_sentence_with_regex(wikipedia_summary, location_patterns)
+    object_name = gen_search_terms(user_input)
+    sent_part_2 = words_after_given_word(response_sent, "located")
+    user_words = user_input.split()
+    tense = 'was'
+    if user_words[1] == 'is':
+        tense = 'is'
+    if sent_part_2 != '' and response_sent != None:
+        return object_name + " " + tense + " located " + sent_part_2
+
+    doc = nlp(wikipedia_summary)
+    
+    # Return the first sentence
+    for sent in doc.sents:
+        return sent.text.strip()
+    
+    return "I'm sorry, I don't know the answer."
     
 def generate_response(user_input, wikipedia_summary):
     question_patterns = {
@@ -249,10 +288,12 @@ def respond_to_input(user_input):
     # Next, generate a wikipedia query based on the user input
     search_term = gen_search_terms(user_input)
     logging.info("WIKIPEDIA QUERY: {}".format(search_term))
+    #print("WIKIPEDIA QUERY: {}".format(search_term))
 
     # Next, get a wikipedia summary based on this query
     wikipedia_summary = fetch_wikipedia_summary(search_term)
     logging.info("WIKIPEDIA SUMMARY: {}".format(wikipedia_summary))
+    #print("----\nWIKIPEDIA SUMMARY: {}\n-----".format(wikipedia_summary))
 
     # Last, generate a response based on user input and the wikipedia summary
     response = generate_response(user_input, wikipedia_summary)
@@ -260,21 +301,12 @@ def respond_to_input(user_input):
     return response, continue_conv
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1].endswith('.txt'):
-        logfile = sys.argv[1]
-    else:
-        logfile = 'logfile.txt'
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(levelname)s: %(message)s',
-        filename=logfile,
-        filemode='a'
-    )
-
     conversating = True
 
     # Start of conversation
+    print("This is a QA system by Leah Antler, Anna Fenn, June Huck, and Vitaliy Kishchenko. ", end="")
+    print("It will try to answer questions that start with Who, What, When or Where. ", end="")
+    print("Enter \"exit\" to leave the program.")
     print("Please ask a question. Type 'exit' to exit.")
     logging.info("Please ask a question. Type 'exit' to exit.")
     # Speech loop
@@ -297,4 +329,15 @@ def main():
     logging.info("Thank you! Goodbye.")
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        logfile = str(sys.argv[1])
+    else:
+        logfile = 'logfile.txt'
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(levelname)s: %(message)s',
+        filename=logfile,
+        filemode='a'
+    )
     main()
