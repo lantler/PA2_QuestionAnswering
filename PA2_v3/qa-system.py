@@ -346,6 +346,9 @@ def generate_response(user_input, wikipedia_summary):
         response = gen_where_response(user_input, wikipedia_summary)
     if question_type == 'when':
         response = gen_when_response(user_input, wikipedia_summary)
+    
+    if response == None or response == "None":
+        response = "I'm sorry, I don't know the answer."
 
     return response
 
