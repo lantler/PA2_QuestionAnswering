@@ -1,3 +1,54 @@
+### Authors
+# - Anna Fenn
+# - June Huck
+# - Leah Antler
+# - Vitaliy Kishchenko
+
+#Submitted 06/23/2024
+
+#Course #: AIT-526-002 (202440.42417)
+
+## QA Program Explanation
+
+### The Problem to be solved
+# A Question Answer System (QA) is a program meant to answer simple Who, What, When, Where Questions provided by user input.
+# It does this from any domain and provides complete sentences as answers. Our program does this by striping down what the user is tying to ask
+# finding both the subject and type of question being asked, finding the wiki page of subject and searching the summary for particular infrmation
+# based on the type of question asked.
+
+
+
+### Examples, usage instructions, and bonus functionality
+# To use our program, you can simply run the python file or run it in the terminal with an argument, for a logfile name if wanted, as such:
+#> python qa-system.py example_log_file.txt
+#> python qa-system.py
+#If you don't specify a name, it automatically names it logfile.txt
+# Once the program runs you will begin to see output and be prompted by the algorithm for input.
+# Make sure your input is a question of who, what, when, or where, and is both spelled correctly and has proper grammar.
+# An example of a proper question could be:
+#> When was George Washington Born?
+#> Who is Obama?
+#> Where is China?
+# You will then recieve a curated answer, if it is easy to gather that, or prompt indicating that the algorithm cannot answer that question
+#Ex: When was George Washington Born?
+#Ans: George Washington was born February 22, 1732
+# After which you can continue to input more questions as above or simply reply "exit" to quit the program at any time
+
+#Bonus functionality potentially includes the handling of born related questions or rather specific variants of when based questions, 
+# where it specifically gathers dates from the standard parenthesis format.
+
+
+### Algorithms and program logic
+# Our programs main logic is as follows:
+# 1. Take the users input and strip it down into its fundemental components, what is the subject of the question, what type of question,
+#    does the question make sense, etc. And does this using a variety of Entity Recognition techniques, word spotting, POS tagging, matching, and regex
+# 2. The program, if the question is usable, grabs the summary entry from the named entities wikipedia page, using Wikipediaapi tools
+# 3. The program then tries to find a specific pattern of sentence based on the type of question inputted, such as sentences surrounding location
+#    Sentences that might have the words born, is located, includes the name of the entity, etc.
+# 4. Once the probable sentence with that information is housed within the summary, the program then extracts the information from the 
+#    that sentence and concatenates the information if the information needs to be more concise or returns the sentence in most who or what sentences
+
+#
 import pandas as pd
 import re
 import sys
