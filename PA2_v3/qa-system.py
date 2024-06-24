@@ -13,7 +13,7 @@
 ### The Problem to be solved
 # A Question Answer System (QA) is a program meant to answer simple Who, What, When, Where Questions provided by user input.
 # It does this from any domain and provides complete sentences as answers. Our program does this by striping down what the user is tying to ask
-# finding both the subject and type of question being asked, finding the wiki page of subject and searching the summary for particular infrmation
+# finding both the subject and type of question being asked, finding the wiki page of subject and searching the summary for particular information
 # based on the type of question asked.
 
 
@@ -77,7 +77,7 @@ def end_condition(text):
     else:
         return True
     
-#Leahs scraping code from here
+#Leah's scraping code from here
 def fetch_wikipedia_summary(topic):
     user_agent = 'PA2/1.0 (lantler@gmu.edu)'
     wiki_api = wikipediaapi.Wikipedia('en', headers={'User-Agent': user_agent})
@@ -135,7 +135,7 @@ def gen_search_terms(query):
     
     return search_term
 
-#Leahs scraping code from here
+#Leah's scraping code from here
 def fetch_wikipedia_summary(topic):
     user_agent = 'PA2/1.0 (lantler@gmu.edu)'
     wiki_api = wikipediaapi.Wikipedia('en', headers={'User-Agent': user_agent})
@@ -228,11 +228,28 @@ def find_last_gpe_in_sentence(sentence):
     return last_gpe
 
 def gen_who_response(user_input, wikipedia_summary):
-    # Return the first sentence of the wikipedia summary
+    
+    user_input= nltk.word_tokenize(user_input)
     doc = nlp(wikipedia_summary)
+    
+    # If they're not just asking about who a person is/was
+    if user_input[1] != r'\b(is|was)\b':
+        matcher = Matcher(nlp.vocab)
+        matcher.add("ENTITY", [[{"ENT_TYPE": "PERSON"}]])
+    
+        for sentence in doc.sents:
+            sentence_doc = nlp(sentence.text)
+            matches = matcher(sentence_doc)
+            if matches:
+                cleaned_sentence = re.sub(r'\([^)]*\)', '', sentence.text).strip()
+                return cleaned_sentence
+    
+    # Or if they're just asking about a person, return the first sentence of their bio
+    else:    
     # Return the first sentence
-    for sent in doc.sents:
-        return sent.text.strip()
+        for sent in doc.sents:
+            cleaned_sentence = re.sub(r'\([^)]*\)', '', sent.text).strip()
+            return cleaned_sentence
 
 def gen_what_response(user_input, wikipedia_summary):
     # Return the first sentence of the wikipedia summary
